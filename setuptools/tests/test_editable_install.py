@@ -942,6 +942,11 @@ class TestOverallBehaviour:
         mod1.write_text("var = 17", encoding="utf-8")
         mod2.write_text("var = 781", encoding="utf-8")
         resource_file.write_text("resource 374", encoding="utf-8")
+        # Same-size rewrite within the same second as the first import: make the
+        # mtime differ so the cached .pyc is not reused (flaky '42 781' on CI).
+        for edited in (mod1, mod2):
+            later = os.stat(edited).st_mtime + 2
+            os.utime(edited, (later, later))
 
         out = venv.run(["python", "-c", dedent(cmd_get_vars)])
         assert "42 13" not in out
